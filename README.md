@@ -82,11 +82,57 @@ It is possible to change this order of the actions and their parameters by dragg
 
 ![](./Capture%20web_23-1-2024_155658_lora-dev.cumulocity.com.jpeg)
 
-# deploying the profile
+Here is a typical refresh action implementation in Python 3:
+
+```
+#!/usr/bin/python3
+
+import subprocess, json, sys, os, requests
+
+def run(cmd):
+    return subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode("utf-8").strip()
+
+def update_properties(profile):
+    data = {}
+    for p in profile["properties"]:
+        value = run(p["script"])
+        if p["json"]:
+            value = json.loads(value)
+        if "." in p["name"]:
+            objName, valueName = p["name"].split('.')
+            if not objName in data:
+                data[objName] = {}
+            data[objName][valueName] = value
+        else:
+            data[p["name"]] = value
+
+    with open("/etc/tedge/device/inventory.json", "w") as f:
+        json.dump(data, f, indent=4)
+    deviceId = run("tedge config get device.id")
+    c8y_proxy_bind_address = run("tedge config get c8y.proxy.bind.address")
+    c8y_proxy_bind_port = run("tedge config get c8y.proxy.bind.port")
+    internalDeviceId = requests.get(f"http://{c8y_proxy_bind_address}:{c8y_proxy_bind_port}/c8y/identity/externalIds/c8y_Serial/{deviceId}").json()["managedObject"]["id"]
+    requests.put(f"http://{c8y_proxy_bind_address}:{c8y_proxy_bind_port}/c8y/inventory/managedObjects/{internalDeviceId}", json=data)
+
+BASE_PATH = "/etc/tedge-profile"
+PROFILE_PATH = BASE_PATH + "/profile"
+with open(PROFILE_PATH, "r") as f:
+    data = json.load(f)
+    update_properties(data)
+
+```
+
+# Deploying the profile
 
 Thin-edge profiles are stored in the software repository with tedge-profile type.
 
 To deploy a profile you therefore simply use the standard software management feature of Cumulocity.
+
+When a profile is deployed, the software management plugin will perform the following tasks:
+
+- Call each script of each property, update the inventory.json file, push the content on the inventory.json to Cumulocity inventory, ensure that tedge/tedge is the owner of inventory.json file (important if you want an action that can refresh the properties, since actions are performed by tedge user)
+- Ensure that the c8y_Command operation is supported and correctly configured as it will be used to process the actions
+- Create a file for each action based on the action id
 
 # Device detail view
 
