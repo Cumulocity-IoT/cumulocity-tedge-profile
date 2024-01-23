@@ -1,0 +1,63 @@
+<c8y-title>Devices</c8y-title>
+
+<div class="split-scroll">
+  <c8y-device-grid
+    #deviceGrid
+    [title]="'Devices' | translate"
+    class="scroll-column"
+    [columns]="columns"
+    [selectable]="true"
+    [actionControls]="actionControls"
+    [baseQuery]="baseQuery"
+    [bulkActionControls]="bulkActionControls"
+    [columnsConfigKey]="GRID_CONFIG_KEY"
+    legacyConfigKey="all-devices-columns-meta_"
+    legacyFilterKey="all-devices-columns-config"
+  >
+  </c8y-device-grid>
+</div>
+
+<ng-template #rebootDeviceModal>
+  <div class="modal-header">
+    <h4 id="dialog-name" class="modal-title pull-left">
+      Confirm device reboot
+    </h4>
+  </div>
+  <div class="modal-body">Device will be rebooted<br /></div>
+  <div class="modal-footer">
+    <button class="btn btn-default" (click)="endReboot()">Confirm</button>
+    <button class="btn btn-primary" (click)="rebootDeviceModalRef.hide()">
+      Cancel
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #rebootDevicesModal>
+  <div class="modal-header">
+    <h4 id="dialog-name" class="modal-title pull-left">
+      Confirm devices reboot
+    </h4>
+  </div>
+  <div class="modal-body">Devices will be rebooted<br /></div>
+  <div class="modal-footer">
+    <button class="btn btn-default" (click)="endRebootAll()">Confirm</button>
+    <button class="btn btn-primary" (click)="rebootDevicesModalRef.hide()">
+      Cancel
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #deleteDevicesModal>
+  <div class="modal-header">
+    <h4 id="dialog-name" class="modal-title pull-left">
+      Confirm devices deletion
+    </h4>
+  </div>
+  <div class="modal-body">Devices will be removed from inventory<br /></div>
+  <div class="modal-footer">
+    <button class="btn btn-default" (click)="endDeleteAll()">Confirm</button>
+    <button class="btn btn-primary" (click)="deleteDevicesModalRef.hide()">
+      Cancel
+    </button>
+  </div>
+</ng-template>

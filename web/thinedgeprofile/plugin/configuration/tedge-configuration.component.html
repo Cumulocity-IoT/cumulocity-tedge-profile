@@ -1,0 +1,765 @@
+<c8y-title translate>Profiles</c8y-title>
+<div class="row">
+  <div class="col-sm-3"></div>
+  <div class="tabContainer hidden-xs col-sm-9">
+    <ul class="nav nav-tabs nav-tabsc8y">
+      <li [class]="categoriesTab">
+        <a
+          routerlinkactive
+          title="Categories"
+          (click)="goToCategories()"
+          href=""
+          ><i class="dlt-c8y-icon-stack"></i
+          ><span class="txt">Categories</span></a
+        >
+      </li>
+      <li [class]="propertiesTab">
+        <a
+          routerlinkactive
+          title="Properties"
+          (click)="goToProperties()"
+          href=""
+          ><i class="dlt-c8y-icon-stack"></i
+          ><span class="txt">Properties</span></a
+        >
+      </li>
+      <li [class]="actionsTab">
+        <a routerlinkactive title="Actions" (click)="goToActions()" href=""
+          ><i class="dlt-c8y-icon-upload"></i
+          ><span class="txt">Actions</span></a
+        >
+      </li>
+    </ul>
+  </div>
+</div>
+<div class="row">
+  <div class="card col-sm-3">
+    <div class="card-block">
+      <div class="form-group col-sm-12">
+        <div class="c8y-select-wrapper">
+          <label for="profile">Select profile:</label>
+          <select
+            #profile
+            class="form-control"
+            (change)="loadProfileVersions()"
+            [(ngModel)]="currentProfile"
+          >
+            <option *ngFor="let p of profiles" [ngValue]="p">
+              {{ p.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group col-sm-12">
+        <div class="c8y-select-wrapper">
+          <label for="version">Select version:</label>
+          <select
+            #version
+            class="form-control"
+            (change)="changeProfile()"
+            [(ngModel)]="currentProfileVersion"
+          >
+            <option *ngFor="let v of profileVersions" [ngValue]="v">
+              {{ v.version }}
+            </option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group col-sm-12">
+        <button type="button" class="btn btn-danger" (click)="removeProfile()">
+          Remove current profile
+        </button>
+      </div>
+      <div class="form-group col-sm-12">
+        <button
+          type="button"
+          class="btn btn-danger"
+          (click)="removeProfileVersion()"
+        >
+          Remove current version
+        </button>
+      </div>
+      <div class="form-group col-sm-12">
+        <label for="newProfile">New profile name:</label>
+        <input #newProfile required placeholder="profile name" />
+      </div>
+      <div class="form-group col-sm-12">
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="createProfile(newProfile.value)"
+          [disabled]="!newProfile.value || newProfile.value.length == 0"
+        >
+          Add new profile
+        </button>
+      </div>
+      <div class="form-group col-sm-12">
+        <label for="newVersion">New version:</label>
+        <input #newVersion required placeholder="profile version" />
+      </div>
+      <div class="form-group col-sm-12">
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="createProfileVersion(newVersion.value)"
+          [disabled]="
+            !currentProfile || !newVersion.value || newVersion.value.length == 0
+          "
+        >
+          Add new version
+        </button>
+      </div>
+      <div class="form-group col-sm-12">
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="copyProfile(newProfile.value)"
+        >
+          Copy current profile
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="card col-sm-9" *ngIf="categoriesTab === 'active'">
+    <div class="card-header" style="height: 60px">
+      <h3>Categories</h3>
+    </div>
+    <div class="card-block">
+      <c8y-list-group
+        class="flex-grow ff-scroll-fix cdk-droplist"
+        cdkDropList
+        (cdkDropListDropped)="drop($event, categories)"
+      >
+        <c8y-li
+          *ngFor="let category of currentProfileVersion.categories"
+          #li
+          cdkDrag
+          class="d-block"
+        >
+          <button class="btn-clean" (click)="li.collapsed = !li.collapsed">
+            {{ category.label || "&lt;no name&gt;" }}
+          </button>
+          <c8y-li-drag-handle cdkDragHandle>
+            <i c8yIcon="drag-reorder"></i>
+          </c8y-li-drag-handle>
+          <c8y-li-action
+            *ngIf="category.canDelete"
+            (click)="deleteCategory(category)"
+            icon="times"
+          >
+            Delete property
+          </c8y-li-action>
+          <c8y-li-collapse>
+            <div class="row">
+              <div class="form-group col-sm-6">
+                <label for="categoryName">Category name</label>
+                <input
+                  #categoryName
+                  type="text"
+                  required
+                  [(ngModel)]="category.name"
+                />
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="categoryLabel">Category label</label>
+                <input
+                  #categoryLabel
+                  type="text"
+                  required
+                  [(ngModel)]="category.label"
+                />
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="categoryDescription">Category description</label>
+                <input
+                  #categoryDescription
+                  type="text"
+                  [(ngModel)]="category.description"
+                />
+              </div>
+            </div>
+          </c8y-li-collapse>
+        </c8y-li>
+      </c8y-list-group>
+      <button class="btn btn-default btn-sm" (click)="addCategory()">
+        <i c8yIcon="plus-circle"></i>
+        Add category
+      </button>
+    </div>
+    <div class="card-footer">
+      <div class="form-group col-sm-12">
+        <button type="button" class="btn btn-primary" (click)="saveProfile()">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="card col-sm-9" *ngIf="propertiesTab === 'active'">
+    <div class="card-header" style="height: 60px">
+      <h3>Properties</h3>
+    </div>
+    <div class="card-block">
+      <c8y-list-group
+        class="flex-grow ff-scroll-fix cdk-droplist"
+        cdkDropList
+        (cdkDropListDropped)="drop($event, properties)"
+      >
+        <c8y-li
+          *ngFor="let property of currentProfileVersion.properties"
+          #li
+          cdkDrag
+          class="d-block"
+        >
+          <button class="btn-clean" (click)="li.collapsed = !li.collapsed">
+            {{ property.label || "&lt;no name&gt;" }}
+          </button>
+          <c8y-li-drag-handle cdkDragHandle>
+            <i c8yIcon="drag-reorder"></i>
+          </c8y-li-drag-handle>
+          <c8y-li-action
+            *ngIf="property.canDelete"
+            (click)="deleteProperty(property)"
+            icon="times"
+          >
+            Delete property
+          </c8y-li-action>
+          <c8y-li-collapse>
+            <div class="row">
+              <div class="form-group col-sm-6">
+                <label for="propertyName">Property name</label>
+                <input
+                  #propertyName
+                  type="text"
+                  required
+                  [(ngModel)]="property.name"
+                />
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="propertyLabel">Property label</label>
+                <input
+                  #propertyLabel
+                  type="text"
+                  required
+                  [(ngModel)]="property.label"
+                />
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="propertyCategory">Property categories</label>
+                <c8y-select
+                  [items]="currentProfileVersion.categories"
+                  #propertyCategory
+                  [selected]="property.selectedCategories"
+                  [selectedLabel]="selectedLabelFunction"
+                  (onChange)="selectedCategoriesChanged($event, property)"
+                ></c8y-select>
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="propertyDescription">Property description</label>
+                <input
+                  #propertyDescription
+                  type="text"
+                  [(ngModel)]="property.description"
+                />
+              </div>
+              <div class="form-group col-sm-6">
+                <label class="c8y-checkbox">
+                  <input
+                    #propertyStore
+                    type="checkbox"
+                    [(ngModel)]="property.store"
+                  />
+                  <span></span><span>Store property value</span>
+                </label>
+              </div>
+              <div class="form-group col-sm-6">
+                <label class="c8y-checkbox">
+                  <input
+                    #propertyJson
+                    type="checkbox"
+                    [(ngModel)]="property.json"
+                  />
+                  <span></span><span>JSON format</span>
+                </label>
+              </div>
+              <div class="form-group col-sm-12">
+                <label for="propertyScript">Property script</label>
+                <textarea
+                  #propertyScript
+                  [(ngModel)]="property.script"
+                  rows="6"
+                  style="width: 100%"
+                  required
+                ></textarea>
+              </div>
+            </div>
+          </c8y-li-collapse>
+        </c8y-li>
+      </c8y-list-group>
+      <button class="btn btn-default btn-sm" (click)="addProperty()">
+        <i c8yIcon="plus-circle"></i>
+        Add property
+      </button>
+    </div>
+    <div class="card-footer">
+      <div class="form-group col-sm-12">
+        <button type="button" class="btn btn-primary" (click)="saveProfile()">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="card col-sm-9" *ngIf="actionsTab === 'active'">
+    <div class="card-header" style="height: 60px">
+      <h3>Actions</h3>
+    </div>
+    <div class="card-block" style="overflow: visible">
+      <c8y-list-group>
+        <c8y-li *ngFor="let operation of currentProfileVersion.actions" #li>
+          <button class="btn-clean" (click)="li.toggleCollapsed($event)">
+            {{ operation.name || "&lt;no name&gt;" }}
+          </button>
+          <c8y-li-action (click)="deleteOperation(operation)" icon="times">
+            Delete action
+          </c8y-li-action>
+          <c8y-li-collapse>
+            <div class="row">
+              <div class="form-group col-sm-6">
+                <label for="operationId">Action id</label>
+                <input #operationId type="text" [(ngModel)]="operation.id" />
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="operationName">Action name</label>
+                <input
+                  #operationName
+                  type="text"
+                  [(ngModel)]="operation.name"
+                />
+              </div>
+              <div class="form-group col-sm-6">
+                <label class="c8y-checkbox">
+                  <input
+                    type="checkbox"
+                    #tablerowaction
+                    [(ngModel)]="operation.tableRowAction"
+                  />
+                  <span></span>
+                  <span>Apply on table rows</span>
+                </label>
+              </div>
+              <div class="form-group col-sm-6">
+                <label class="c8y-checkbox">
+                  <input
+                    type="checkbox"
+                    #confirmation
+                    [(ngModel)]="operation.confirmation"
+                  />
+                  <span></span>
+                  <span>Requires confirmation</span>
+                </label>
+              </div>
+              <div class="form-group col-sm-6" *ngIf="operation.tableRowAction">
+                <label for="operationTableName">Select a table</label>
+                <div class="c8y-select-wrapper">
+                  <select
+                    class="form-control"
+                    #operationTableName
+                    [(ngModel)]="operation.tableName"
+                  >
+                    <option
+                      *ngFor="let jsonprop of getJsonProperties()"
+                      [value]="jsonprop.name"
+                    >
+                      {{ jsonprop.label }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="operationIcon">Action icon</label>
+                <input
+                  #operationIcon
+                  type="text"
+                  [(ngModel)]="operation.icon"
+                />
+                <span *ngIf="operation.icon"
+                  >Preview: <i [c8yIcon]="operation.icon"></i
+                ></span>
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="operationCategories">Action categories</label>
+                <c8y-select
+                  [items]="currentProfileVersion.categories"
+                  #operationCategories
+                  [selected]="operation.selectedCategories"
+                  [selectedLabel]="selectedLabelFunction"
+                  (onChange)="selectedCategoriesChanged($event, operation)"
+                ></c8y-select>
+              </div>
+              <div class="form-group col-sm-12">
+                <label for="operationScript">Action script</label>
+                <textarea
+                  #operationScript
+                  rows="6"
+                  style="width: 100%"
+                  [(ngModel)]="operation.script"
+                ></textarea>
+              </div>
+            </div>
+            <div class="row">
+              <div><h4>Parameters</h4></div>
+              <c8y-list-group
+                cdkDropList
+                cdkDropListGroup
+                [cdkDropListData]="operation.elements"
+                (cdkDropListDropped)="dropElement($event, operation.elements)"
+              >
+                <c8y-li
+                  *ngFor="let element of operation.elements; let i = index"
+                  #pli
+                  cdkDrag
+                >
+                  <button
+                    class="btn-clean"
+                    (click)="pli.toggleCollapsed($event)"
+                  >
+                    {{ i + 1 }}. {{ element.name || "&lt;no name&gt;" }}
+                    <span>{{ element.type || "&lt;no type&gt;" }}</span>
+                  </button>
+                  <c8y-li-drag-handle cdkDragHandle #dhpli>
+                    <i c8yIcon="drag-reorder"></i>
+                  </c8y-li-drag-handle>
+                  <c8y-li-action
+                    (click)="deleteElement(operation, element)"
+                    icon="times"
+                  >
+                    Delete element
+                  </c8y-li-action>
+                  <c8y-li-action
+                    (click)="moveUp(operation, element)"
+                    icon="sort-up"
+                  >
+                    Move up
+                  </c8y-li-action>
+                  <c8y-li-action
+                    (click)="moveDown(operation, element)"
+                    icon="sort-down"
+                  >
+                    Move down
+                  </c8y-li-action>
+                  <c8y-li-collapse>
+                    <div class="row" *ngIf="isParam(element)">
+                      <div class="form-group col-sm-4">
+                        <label for="paramId">Parameter id</label>
+                        <input #paramId type="text" [(ngModel)]="element.id" />
+                      </div>
+                      <div class="form-group col-sm-4">
+                        <label for="paramName">Parameter name</label>
+                        <input
+                          #paramName
+                          type="text"
+                          [(ngModel)]="element.name"
+                        />
+                      </div>
+                      <div class="form-group col-sm-4">
+                        <div class="c8y-select-wrapper">
+                          <label for="paramType">Select type</label>
+                          <select
+                            #paramType
+                            class="form-control"
+                            [(ngModel)]="element.type"
+                          >
+                            <option value="STRING">STRING</option>
+                            <option value="INTEGER">INTEGER</option>
+                            <option value="FLOAT">FLOAT</option>
+                            <option value="BOOL">BOOL</option>
+                            <option value="DATE">DATE</option>
+                            <option value="ENUM">ENUM</option>
+                            <option value="FILE">FILE</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div *ngIf="element.type === 'ENUM'" class="col-sm-12">
+                        <c8y-list-group>
+                          <c8y-li
+                            *ngFor="
+                              let v of element.values;
+                              let i = index;
+                              trackBy: trackByIdx
+                            "
+                          >
+                            <c8y-li-action
+                              (click)="deleteValue(element, element.values[i])"
+                              icon="times"
+                            >
+                              Delete value
+                            </c8y-li-action>
+                            <input
+                              type="text"
+                              [(ngModel)]="element.values[i]"
+                            />
+                          </c8y-li>
+                          <c8y-li>
+                            <button
+                              class="btn-primary"
+                              (click)="addValue(element)"
+                            >
+                              Add value
+                            </button>
+                          </c8y-li>
+                        </c8y-list-group>
+                      </div>
+                    </div>
+                    <div *ngIf="isGroup(element)">
+                      <div class="row">
+                        <div class="form-group col-sm-3">
+                          <label for="paramId">Group id:</label>
+                          <input
+                            #paramId
+                            type="text"
+                            [(ngModel)]="element.id"
+                          />
+                        </div>
+                        <div class="form-group col-sm-3">
+                          <label for="paramId">Group name:</label>
+                          <input
+                            #paramName
+                            type="text"
+                            [(ngModel)]="element.name"
+                          />
+                        </div>
+                      </div>
+                      <div class="row" *ngIf="isGroup(element)">
+                        <label class="c8y-checkbox col-sm-3">
+                          <input
+                            type="checkbox"
+                            #repeatable
+                            [(ngModel)]="element.repeatable"
+                          />
+                          <span></span>
+                          <span>Repeatable</span>
+                        </label>
+                        <div
+                          class="form-group col-sm-3"
+                          *ngIf="element.repeatable"
+                        >
+                          <label for="min">Min occurences:</label>
+                          <input
+                            #min
+                            type="number"
+                            [(ngModel)]="element.minOccur"
+                            [min]="1"
+                            [max]="element.maxOccur"
+                          />
+                        </div>
+                        <div
+                          class="form-group col-sm-3"
+                          *ngIf="element.repeatable"
+                        >
+                          <label for="max">Max occurences:</label>
+                          <input
+                            #max
+                            type="number"
+                            [(ngModel)]="element.maxOccur"
+                            [min]="element.minOccur"
+                          />
+                        </div>
+                      </div>
+                      <div class="row" *ngIf="isGroup(element)">
+                        <label class="c8y-checkbox col-sm-3">
+                          <input
+                            type="checkbox"
+                            #dependsOnParam
+                            [(ngModel)]="element.dependsOnParam"
+                          />
+                          <span></span>
+                          <span>Depends on Param</span>
+                        </label>
+                        <div
+                          class="form-group col-sm-3"
+                          *ngIf="element.dependsOnParam"
+                        >
+                          <label for="dependsOnParamId">Param id:</label>
+                          <input
+                            #dependsOnParamId
+                            type="text"
+                            [(ngModel)]="element.dependsOnParamId"
+                          />
+                        </div>
+                        <div
+                          class="form-group col-sm-3"
+                          *ngIf="element.dependsOnParam"
+                        >
+                          <label for="dependsOnParamValue">Param value:</label>
+                          <input
+                            #dependsOnParamValue
+                            type="text"
+                            [(ngModel)]="element.dependsOnParamValue"
+                          />
+                        </div>
+                      </div>
+                      <div><h4>Parameters</h4></div>
+                      <c8y-list-group
+                        cdkDropList
+                        [id]="element.name"
+                        [cdkDropListData]="element.elements"
+                        (cdkDropListDropped)="
+                          dropElement($event, element.elements)
+                        "
+                      >
+                        <c8y-li
+                          *ngFor="let param of element.elements"
+                          cdkDrag
+                          class="d-block"
+                          #eli
+                        >
+                          <button
+                            class="btn-clean"
+                            (click)="eli.toggleCollapsed($event)"
+                          >
+                            {{ param.name || "&lt;no name&gt;" }}
+                            {{ param.type || "&lt;no type&gt;" }}
+                          </button>
+                          <c8y-li-drag-handle cdkDragHandle #dheli>
+                            <i c8yIcon="drag-reorder"></i>
+                          </c8y-li-drag-handle>
+                          <c8y-li-action
+                            (click)="deleteElement(element, param)"
+                            icon="times"
+                          >
+                            Delete element
+                          </c8y-li-action>
+                          <c8y-li-action
+                            (click)="moveUp(element, param)"
+                            icon="sort-up"
+                          >
+                            Move up
+                          </c8y-li-action>
+                          <c8y-li-action
+                            (click)="moveDown(element, param)"
+                            icon="sort-down"
+                          >
+                            Move down
+                          </c8y-li-action>
+                          <c8y-li-collapse>
+                            <div class="row">
+                              <div class="form-group col-sm-3">
+                                <label for="paramId">Parameter id:</label>
+                                <input
+                                  #paramId
+                                  type="text"
+                                  [(ngModel)]="param.id"
+                                />
+                              </div>
+                              <div class="form-group col-sm-3">
+                                <label for="paramId">Parameter name:</label>
+                                <input
+                                  #paramName
+                                  type="text"
+                                  [(ngModel)]="param.name"
+                                />
+                              </div>
+                              <div class="form-group col-sm-3">
+                                <div class="c8y-select-wrapper">
+                                  <label for="paramType">Select type:</label>
+                                  <select
+                                    #paramType
+                                    class="form-control"
+                                    [(ngModel)]="param.type"
+                                  >
+                                    <option value="STRING">STRING</option>
+                                    <option value="INTEGER">INTEGER</option>
+                                    <option value="FLOAT">FLOAT</option>
+                                    <option value="BOOL">BOOL</option>
+                                    <option value="DATE">DATE</option>
+                                    <option value="ENUM">ENUM</option>
+                                    <option value="FILE">FILE</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div
+                                *ngIf="param.type === 'ENUM'"
+                                class="col-sm-3"
+                              >
+                                <c8y-list-group>
+                                  <c8y-li
+                                    *ngFor="
+                                      let v of param.value;
+                                      let i = index;
+                                      trackBy: trackByIdx
+                                    "
+                                  >
+                                    <c8y-li-action
+                                      (click)="
+                                        deleteValue(param, param.value[i])
+                                      "
+                                      icon="times"
+                                    >
+                                      Delete value
+                                    </c8y-li-action>
+                                    <input
+                                      type="text"
+                                      [(ngModel)]="param.value[i]"
+                                      size="10"
+                                    />
+                                  </c8y-li>
+                                  <c8y-li>
+                                    <button
+                                      class="btn-primary"
+                                      (click)="addValue(param)"
+                                    >
+                                      Add value
+                                    </button>
+                                  </c8y-li>
+                                </c8y-list-group>
+                              </div>
+                            </div>
+                          </c8y-li-collapse>
+                        </c8y-li>
+                      </c8y-list-group>
+                      <div>
+                        <button
+                          class="btn btn-default btn-sm"
+                          (click)="addParam(element)"
+                        >
+                          <i c8yIcon="plus-circle"></i>
+                          Add parameter
+                        </button>
+                      </div>
+                    </div>
+                  </c8y-li-collapse>
+                </c8y-li>
+              </c8y-list-group>
+              <button
+                class="btn btn-default btn-sm"
+                (click)="addParam(operation)"
+              >
+                <i c8yIcon="plus-circle"></i>
+                Add parameter
+              </button>
+              <button
+                class="btn btn-default btn-sm"
+                (click)="addGroup(operation)"
+              >
+                <i c8yIcon="plus-circle"></i>
+                Add group
+              </button>
+            </div>
+          </c8y-li-collapse>
+        </c8y-li>
+        <c8y-li>
+          <button class="btn btn-default btn-sm" (click)="addOperation()">
+            <i c8yIcon="plus-circle"></i>
+            Add action
+          </button>
+        </c8y-li>
+      </c8y-list-group>
+    </div>
+    <div class="card-footer">
+      <div class="form-group col-sm-12">
+        <button type="button" class="btn btn-primary" (click)="saveProfile()">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,130 @@
+#!/usr/bin/python3
+
+import subprocess, json, sys, argparse, logging, os, requests, pwd, grp
+
+logging.basicConfig(filename='/var/log/tedge-profile.log',encoding='utf-8',format='%(asctime)s,%(msecs)03d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%Y-%m-%d:%H:%M:%S', level=logging.INFO)
+
+def run(cmd):
+    return subprocess.check_output(cmd, shell=True, executable="/bin/bash").decode("utf-8").strip()
+
+def update_properties(profile):
+    data = {}
+    for p in profile["properties"]:
+        logging.info(f"Reading property: {p['name']}")
+        value = run(p["script"])
+        if p["json"]:
+            value = json.loads(value)
+        if "." in p["name"]:
+            objName, valueName = p["name"].split('.')
+            if not objName in data:
+                data[objName] = {}
+            data[objName][valueName] = value
+        else:
+            data[p["name"]] = value
+        logging.info(f"value: {value}")
+        
+    with open("/etc/tedge/device/inventory.json", "w") as f:
+        json.dump(data, f, indent=4)
+    uid = pwd.getpwnam("tedge").pw_uid
+    gid = grp.getgrnam("tedge").gr_gid
+    os.chown("/etc/tedge/device/inventory.json", uid, gid)
+    deviceId = run("tedge config get device.id")
+    c8y_proxy_bind_address = run("tedge config get c8y.proxy.bind.address")
+    c8y_proxy_bind_port = run("tedge config get c8y.proxy.bind.port")
+    internalDeviceId = requests.get(f"http://{c8y_proxy_bind_address}:{c8y_proxy_bind_port}/c8y/identity/externalIds/c8y_Serial/{deviceId}").json()["managedObject"]["id"]
+    requests.put(f"http://{c8y_proxy_bind_address}:{c8y_proxy_bind_port}/c8y/inventory/managedObjects/{internalDeviceId}", json=data)
+
+def update_operations(profile):
+    logging.info("Updating operations")
+    with open("/etc/tedge/operations/c8y/c8y_Command", "w") as f:
+        f.write(
+'''[exec]
+topic="c8y/s/ds"
+on_message="511"
+command="/etc/tedge/operations/command"
+timeout=10''')
+    with open("/etc/tedge/operations/command", "w") as f:
+        f.write(
+'''#!/bin/bash
+# auto generated
+# Parse the smart rest message, ignore the first two field, and everything afterwards is the command
+COMMAND="${1#*,*,}"
+
+# Check if command is wrapped with quotes, if so then remove them
+if [[ "$COMMAND" == \\"*\\" ]]; then
+    COMMAND="${COMMAND:1:-1}"
+fi
+
+# Execute command
+bash -c "$COMMAND"
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "Command returned a non-zero exit code. code=$EXIT_CODE" >&2
+fi
+
+exit "$EXIT_CODE"''')
+    os.chmod("/etc/tedge/operations/command", 0o755)
+    for a in profile["actions"]:
+        logging.info(f"Updating operation: {a['id']}")
+        with open("/etc/tedge/operations/" + a["id"], "w") as f:
+            f.write(a["script"])
+        os.chmod("/etc/tedge/operations/" + a["id"], 0o755)
+
+BASE_PATH = "/etc/tedge-profile"
+PROFILE_PATH = BASE_PATH + "/profile"
+parser = argparse.ArgumentParser(description="Manage thin-edge profile")
+parser.add_argument("command")
+command = sys.argv[1]
+logging.info("Processing command {0}".format(str(sys.argv)))
+if command == "list":
+    try:
+        if not os.path.exists(BASE_PATH):
+            os.mkdir(BASE_PATH)
+        if os.path.exists(PROFILE_PATH):
+            with open(PROFILE_PATH, "r") as f:
+                data = json.load(f)
+                result = "{0}\t{1}".format(data["name"], data["version"])
+                logging.info(result)
+                print(result)
+        else:
+            logging.info("No profile installed")
+            sys.stdout.write("no-profile\t0.0.0\n")
+        logging.info("list command processed.")
+    except Exception as e:
+        logging.error(e)
+        exit(2)
+
+if command == "install":
+    try:
+        parser.add_argument("name")
+        parser.add_argument("--module-version")
+        parser.add_argument("--file")
+        args = parser.parse_args()
+        if not os.path.exists(BASE_PATH):
+            os.mkdir(BASE_PATH)
+        with open(args.file, "r") as f:
+            data = json.load(f)
+            with open(PROFILE_PATH, "w") as d:
+                json.dump(data, d, indent=4)
+            update_properties(data)
+            update_operations(data)
+    except Exception as e:
+        logging.error(e)
+        exit(2)
+
+if command == "remove":
+    try:
+        logging.info("Will remove profile...")
+        if os.path.exists(PROFILE_PATH):
+            os.remove(PROFILE_PATH)
+        if os.path.exists("/etc/tedge/device/inventory.json"):
+            os.remove("/etc/tedge/device/inventory.json")
+    except Exception as e:
+        logging.error(e)
+        exit(2)
+
+if command == "update-list":
+    exit(1)
+
+exit(0)

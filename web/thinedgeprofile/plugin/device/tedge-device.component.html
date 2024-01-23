@@ -1,0 +1,85 @@
+<button (click)="reboot()" class="btn btn-danger btn-icon">
+  <i c8yIcon="refresh"></i> Reboot
+</button>
+<div class="row" *ngIf="profile">
+  <div class="tabContainer hidden-xs">
+    <ul class="nav nav-tabs nav-tabsc8y">
+      <li *ngFor="let category of profile.categories" [class]="category.active">
+        <a
+          routerlinkactive
+          [title]="category.name"
+          (click)="changeTab($event, category)"
+          href=""
+        >
+          <span class="txt">{{ category.label }}</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="row" *ngIf="profile">
+  <div *ngFor="let category of profile.categories">
+    <div class="card" *ngIf="currentTab.name == category.name">
+      <div class="card-header">
+        <button
+          *ngFor="let action of getSimpleActions(category.name)"
+          [class]="
+            action.confirmation
+              ? 'btn btn-danger btn-icon'
+              : 'btn btn-primary btn-icon'
+          "
+          (click)="runAction(action.id)"
+        >
+          <i [c8yIcon]="action.icon"></i>
+          {{ action.name }}
+        </button>
+      </div>
+      <div class="card-block">
+        <c8y-list-group>
+          <c8y-li *ngFor="let property of filterProperties(category.name)">
+            <label *ngIf="!property.json">{{ property.label }}</label>
+            <div *ngIf="!property.json">
+              {{ getValue(device, property.name) }}
+            </div>
+            <div *ngIf="property.json && device[property.name]">
+              <c8y-data-grid
+                [title]="property.label"
+                [columns]="tables[property.name].headers"
+                [rows]="device[property.name]"
+                [pagination]="pagination"
+                [actionControls]="tables[property.name].actions"
+              ></c8y-data-grid>
+            </div>
+          </c8y-li>
+        </c8y-list-group>
+      </div>
+    </div>
+  </div>
+</div>
+
+<ng-template #actionModal>
+  <div class="modal-header" *ngIf="currentAction">
+    <h4 id="dialog-name" class="modal-title pull-left">
+      {{ currentAction.name }}
+    </h4>
+  </div>
+  <div class="modal-body" *ngIf="currentAction">
+    <div class="col-sm-12">
+      <form [formGroup]="form" *ngIf="fields">
+        <formly-form
+          [model]="parameterValues"
+          [fields]="fields[currentAction.id]"
+          [options]="options"
+          [form]="form"
+        ></formly-form>
+      </form>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-default" (click)="endRunAction()">Confirm</button>
+    <button class="btn btn-primary" (click)="actionModalRef.hide()">
+      Cancel
+    </button>
+  </div>
+</ng-template>

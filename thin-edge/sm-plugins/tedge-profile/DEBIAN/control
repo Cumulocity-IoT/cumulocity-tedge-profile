@@ -1,0 +1,5 @@
+Maintainer: Cyril Poder <cyril.poder@softwareag.com>
+Package: tedge-profile
+Version: 1.0-1
+Architecture: all
+Description: Software management plugin for thin-edge to install tedge profiles
