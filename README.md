@@ -82,11 +82,22 @@ It is possible to change this order of the actions and their parameters by dragg
 
 ![](./Capture%20web_23-1-2024_155658_lora-dev.cumulocity.com.jpeg)
 
+# deploying the profile
+
+Thin-edge profiles are stored in the software repository with tedge-profile type.
+
+To deploy a profile you therefore simply use the standard software management feature of Cumulocity.
+
 # Device detail view
 
 In the device detail view, a new tab "thin-edge" will appear. This view will be composed of horizontal tabs, one for each category, and in each category you will find your properties and actions.
 
-If a property is a table, it will automatically be formatted as Cumulocity NGX table component, and any contextual action will be available on the right end column.
+If a property is a table, it will automatically be formatted as a Cumulocity NGX table component, and any contextual action will be available on the right end column.
+
+Actions will be available whether as buttons or actions on table rows.
+If an action has parameters, a form will be displayed.
+
+When an action completes, a popup will immediately appear informing you of the result of the action. Since actions are implemented as operations they are also available in the "Control" tab of the device.
 
 Example of the "General" category tab with only simple properties:
 
