@@ -84,7 +84,7 @@ It is possible to change this order of the actions and their parameters by dragg
 
 Here is a typical refresh action implementation in Python 3:
 
-```
+```python
 #!/usr/bin/python3
 
 import subprocess, json, sys, os, requests
