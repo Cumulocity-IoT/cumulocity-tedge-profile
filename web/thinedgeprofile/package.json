@@ -1,6 +1,6 @@
 {
   "name": "thinedgeprofile-package",
-  "version": "1017.0.294",
+  "version": "1.0.0",
   "description": "",
   "scripts": {
     "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 c8ycli server -u https://lora-dev.cumulocity.com --shell devicemanagement",
