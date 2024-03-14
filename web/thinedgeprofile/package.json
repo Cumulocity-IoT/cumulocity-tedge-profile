@@ -1,5 +1,5 @@
 {
-  "name": "thinedgeprofile-package",
+  "name": "tedge-profile-plugin",
   "version": "1.0.0",
   "description": "",
   "scripts": {
@@ -49,8 +49,8 @@
     "application": {
       "name": "Thin-edge profile management plugin",
       "description": "Plugin to manage thin-edge device profiles",
-      "contextPath": "thinedgeprofile-package",
-      "key": "thinedgeprofile-package-application-key",
+      "contextPath": "sag-ps-iot-pkg-tedge-profile-plugin",
+      "key": "sag-ps-iot-pkg-tedge-profile-plugin-application-key",
       "upgrade": true,
       "isPackage": true,
       "tabsHorizontal": true,
@@ -65,7 +65,7 @@
         }
       ],
       "remotes": {
-        "thinedgeprofile-plugin": [
+        "sag-ps-iot-pkg-tedge-profile-plugin": [
           "ThinEdgeProfileModule"
         ]
       }
