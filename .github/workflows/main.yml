@@ -41,7 +41,7 @@ jobs:
       - name: Build webapp
         run: |
           export NODE_OPTIONS=--openssl-legacy-provider
-          cd web/ssh-connector
+          cd web/thinedgeprofile
           npm install --force
           npm run build
           cd dist/apps/sag-ps-iot-pkg-tedge-profile-plugin
