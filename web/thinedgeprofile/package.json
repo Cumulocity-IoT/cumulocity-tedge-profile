@@ -1,7 +1,7 @@
 {
   "name": "tedge-profile-plugin",
   "version": "1.0.0",
-  "description": "",
+  "description": "This is the Thin-Edge profile management plugin",
   "scripts": {
     "start": "NODE_TLS_REJECT_UNAUTHORIZED=0 c8ycli server -u https://lora-dev.cumulocity.com --shell devicemanagement",
     "build": "c8ycli build",
